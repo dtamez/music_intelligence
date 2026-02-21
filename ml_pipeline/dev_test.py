@@ -1,15 +1,23 @@
-from features import python_rms, rust_rms
-import random
-import time
+from synthetic_signals import pulse_train
+from features import python_rms
+from visualization import plot_signal_and_rms
+from rust_bridge import rms_batch
 
-data = [random.random() for _ in range(500_000)]
+bpm = 120
+signal = pulse_train(bpm=bpm, duration_sec=5)
 
-t0 = time.time()
-p = python_rms(data)
-t1 = time.time()
+frame_size = 1024
+hop_size = 512
+rms_envelope = rms_batch(signal, frame_size, hop_size)
 
-r = rust_rms(data)
-t2 = time.time()
+plot_signal_and_rms(
+    signal,
+    rms_envelope,
+    hop_size=hop_size,
+    title="Synthetic Beat Signal + RMS Envelope",
+)
 
-print(f"Python rms: {p} time: {t1 - t0}")
-print(f"Rust rms: {r} time: {t2 - t1}")
+# energy = rms_batch(signal, frame_size, hop_size)
+#
+# print(f"Energy frames: {energy[:20]}")
+# print(f"Frames: {len(energy)}")
