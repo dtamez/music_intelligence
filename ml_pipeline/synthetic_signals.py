@@ -6,6 +6,8 @@ def pulse_train(
     duration_sec: float,
     sample_rate: int = 44100,
     window_radius: int = 5000,
+    sigma_ratio: float = 3.0,
+    padding=5000,
 ):
     """
     Generate an easily testable signal for BPM detection. The signal will consist of pulses which are short burts of higher amplitude.
@@ -13,6 +15,7 @@ def pulse_train(
         - pulses are wider than frame_size (used in rms_batch)
         - energy needs to be smooth/gaussian (not an on/off square)
         - envelopes have a single maxima per beat
+    First beat and last beat are currently half clipped and reducing the number of detected beats.
 
     """
     samples = int(duration_sec * sample_rate)
@@ -21,7 +24,7 @@ def pulse_train(
     beats_per_sec = bpm / 60.0
     samples_per_beat = int(sample_rate / beats_per_sec)
 
-    sigma = window_radius / 3
+    sigma = window_radius / sigma_ratio
 
     for beat_center in range(0, samples, samples_per_beat):
         # center of the "beat"
