@@ -9,6 +9,11 @@ def pulse_train(
     sigma_ratio: float = 3.0,
     frame_size: int = 1024,
 ):
+    """
+    Generate a deterministic, BPM accurate, RMS detectable test signal for validating.
+    Energy for each beat: E(d) = exp(-(d²) / (2σ²))
+    Energy is applied ov [-window_radius, +window_radius]
+    """
     # shift the centers of the beats
     beat_region_samples = int(duration_sec * sample_rate)  # length w/o the padding
     padding = max(window_radius, frame_size)
