@@ -7,41 +7,30 @@ def pulse_train(
     sample_rate: int = 44100,
     window_radius: int = 5000,
     sigma_ratio: float = 3.0,
-    padding=5000,
+    frame_size: int = 1024,
 ):
-    """
-    Generate an easily testable signal for BPM detection. The signal will consist of pulses which are short burts of higher amplitude.
-    Improving this by ensuring
-        - pulses are wider than frame_size (used in rms_batch)
-        - energy needs to be smooth/gaussian (not an on/off square)
-        - envelopes have a single maxima per beat
-    First beat and last beat are currently half clipped and reducing the number of detected beats.
+    # shift the centers of the beats
+    beat_region_samples = int(duration_sec * sample_rate)  # length w/o the padding
+    padding = max(window_radius, frame_size)
+    total_samples = beat_region_samples + (2 * padding)
 
-    """
-    samples = int(duration_sec * sample_rate)
-    signal = [0.0] * samples  # all 0, our pulse will be a 1
+    beat_start = padding  # after the padding
+
+    signal = [0.0] * total_samples
 
     beats_per_sec = bpm / 60.0
     samples_per_beat = int(sample_rate / beats_per_sec)
 
     sigma = window_radius / sigma_ratio
 
-    for beat_center in range(0, samples, samples_per_beat):
-        # center of the "beat"
-        # distribute energy with max at center and min at -spread and +spread
-        # energy != linear distance from center but gaussian
-        # energy = exp(-(distance ** 2) / (2 * sigma ** 2))
-        # signal[idx] += energy
-        for offset in range(window_radius):
-            energy = exp(-(offset**2) / (2 * sigma**2))
-            # calculate energy left of center of the beat_center
-            idx = beat_center - offset
-            if idx > -1:
-                signal[idx] += energy
-
-            # calculate energy right of center of the beat_center
+    num_beats = int(round(duration_sec * beats_per_sec))
+    for n in range(num_beats):
+        beat_center = beat_start + int(n * samples_per_beat)
+        for offset in range(-window_radius, window_radius + 1):
             idx = beat_center + offset
-            if idx < samples:
+
+            if 0 <= idx < total_samples:
+                energy = exp(-(offset**2) / (2 * sigma**2))
                 signal[idx] += energy
 
     return signal

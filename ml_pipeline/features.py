@@ -10,8 +10,21 @@ def rust_sum(values):
     return sum_values(values)
 
 
-def python_rms(values):
-    return math.sqrt(sum(v * v for v in values) / len(values))
+def python_rms(values, frame_size, hop_size):
+    out = []
+
+    i = 0
+    while i + frame_size <= len(values):
+        frame = values[i : i + frame_size]
+        sum_sq = 0.0
+        for val in frame:
+            sum_sq += val**2
+
+        rms = math.sqrt(sum_sq / frame_size)
+        out.append(rms)
+        i += hop_size
+
+    return out
 
 
 def rust_rms(values):
